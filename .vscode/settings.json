@@ -1,0 +1,12 @@
+{
+  "go.buildTags": "ierr",
+  "save-runner.enabled": true,
+  "save-runner.commands": [
+    {
+      "enabled": true,
+      "include": "\\.go$",
+      "useTempFile": false,
+      "post": "err4gen -f ${relname}"
+    }
+  ]
+}
