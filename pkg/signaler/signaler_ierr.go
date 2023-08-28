@@ -48,7 +48,7 @@ func (s *Signaler) Handshake(endpoint string, offer signaler.SDP) (answer *signa
 	defer then(&ierr, func() {
 		logger.Debug("握手成功")
 	}, func() {
-		logger.Debug("握手失败", "err", ierr)
+		logger.Warn("握手失败", "err", ierr)
 	})
 
 	b, ierr := json.Marshal(offer)
@@ -117,7 +117,17 @@ func (s *Signaler) subscribeAll(ctx context.Context) (ch chan signaler.Session, 
 }
 
 func (s *Signaler) subscribe(ctx context.Context, ch chan<- signaler.Session, server string) (ierr error) {
-	logger := slog.With("subscribe", server)
+	logger := slog.With(
+		"act", "subscribe",
+		"server", server,
+	)
+	logger.Debug("开始")
+	defer then(&ierr, func() {
+		logger.Debug("成功")
+	}, func() {
+		logger.Warn("失败", "err", ierr)
+	})
+
 	u, ierr := SignURL(server, s.Key)
 	if ierr != nil {
 		return
@@ -202,6 +212,17 @@ var _ signaler.Session = (*Session)(nil)
 
 func (s *Session) Description() (offer signaler.SDP)	{ return s.sdp }
 func (s *Session) Resolve(answer *signaler.SDP) (ierr error) {
+	logger := slog.With(
+		"act", "accept handshake",
+		"id", s.id,
+	)
+	logger.Debug("开始")
+	defer then(&ierr, func() {
+		logger.Debug("成功")
+	}, func() {
+		logger.Warn("失败", "err", ierr)
+	})
+
 	body, ierr := json.Marshal(answer)
 	if ierr != nil {
 		return
