@@ -229,6 +229,8 @@ github.com/shynome/go-x25519 v0.0.1 h1:bCOB8Bqax2qHZzvuEB+hkCTgWikOfbLdy0CEfqKIV
 github.com/shynome/go-x25519 v0.0.1/go.mod h1:DS95Cs+n/SB3uS6BiSkH/IIr4Oz+p5ibpW+rfNEk5y4=
 github.com/shynome/wgortc v0.0.11 h1:DwPssSL8TO+HKV9DCycPx56ihTNv/okUUasnos/g2+w=
 github.com/shynome/wgortc v0.0.11/go.mod h1:FKQuX4sUv1tMahF3v3+s1N/7HYoY7nSbVr/3MBP3NWo=
+github.com/shynome/wgortc v0.0.12 h1:iC0jqnHSH53lkc4d+k/No8MdDpUXNW9v1sHm/gL8Rms=
+github.com/shynome/wgortc v0.0.12/go.mod h1:ym+kEYX3CXjwIE9u4P7bP8aSBKThorHhncbIZU1eEV0=
 github.com/spf13/afero v1.9.5 h1:stMpOSZFs//0Lv29HduCmli3GUfpFoF3Y1Q/aXj/wVM=
 github.com/spf13/afero v1.9.5/go.mod h1:UBogFpq8E9Hx+xc5CNTTEpTnuHVmXDwZcZcE1eb/UhQ=
 github.com/spf13/cast v1.5.1 h1:R+kOtfhWQE6TVQzY+4D7wJLBgkdVasCEFxSUBYBYIlA=
