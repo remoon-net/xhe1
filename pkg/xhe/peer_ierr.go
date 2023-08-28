@@ -6,8 +6,10 @@ package xhe
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/netip"
@@ -25,7 +27,10 @@ type DoH struct {
 	Client	*http.Client
 }
 
-// ParsePeer peer://{pubkey}.xhe.remoon.net[/preshared_key]?keepalive=15
+// ParsePeer
+// peer://{domain.com}[/preshared_key]?[keepalive=15]
+// peer://{pubkey}[/preshared_key]?[keepalive=15]
+// http[s]://domain/path?peer={pubkey}[&preshared=preshared_key][&keepalive=15]
 func (s *DoH) ParsePeer(ctx context.Context, link string) (peer config.Peer, ierr error) {
 	conn := doh.NewConn(s.Client, ctx, s.Server)
 	u, ierr := url.Parse(link)
@@ -34,21 +39,44 @@ func (s *DoH) ParsePeer(ctx context.Context, link string) (peer config.Peer, ier
 	}
 	var endpoint string
 	var pubkey []byte
-	if strings.Index(u.Hostname(), ".") == -1 {
-		pubkey, ierr = hex.DecodeString(u.Hostname())
-		if ierr != nil {
-			return
+	preshared := strings.TrimPrefix(u.Path, "/")
+	switch u.Scheme {
+	case "peer":
+		if strings.Index(u.Hostname(), ".") == -1 {
+			pubkey, ierr = hex2pubkey(u.Hostname())
+			if ierr != nil {
+				return
+			}
+		} else {
+			endpoint, ierr = GetURI(conn, u.Hostname())
+			if ierr != nil {
+				return
+			}
+			var uu *url.URL
+			uu, ierr = url.Parse(endpoint)
+			if ierr != nil {
+				return
+			}
+			pubkey, ierr = hex2pubkey(uu.Query().Get("peer"))
+			if ierr != nil {
+				return
+			}
 		}
-	} else {
-		endpoint, ierr = GetURI(conn, u.Hostname())
-		if ierr != nil {
-			return
-		}
-		pubkey, ierr = GetPubkey(conn, u.Hostname())
+	case "http", "https":
+		q := u.Query()
+		pubkey, ierr = hex2pubkey(q.Get("peer"))
+		endpoint = link
+		preshared = q.Get("preshared")
+	default:
+		ierr = fmt.Errorf("unsupport schema %s", u.Scheme)
+	}
+	if preshared != "" {
+		_, ierr = hex2pubkey(preshared)
 		if ierr != nil {
 			return
 		}
 	}
+
 	ip, ierr := GetIP(pubkey)
 	if ierr != nil {
 		return
@@ -61,13 +89,6 @@ func (s *DoH) ParsePeer(ctx context.Context, link string) (peer config.Peer, ier
 		}
 		u.Fragment = hex.EncodeToString(pubkey)
 		endpoint = u.String()
-	}
-	preshared := strings.TrimPrefix(u.Path, "/")
-	if preshared != "" {
-		_, ierr = hex2pubkey(preshared)
-		if ierr != nil {
-			return
-		}
 	}
 	peer = config.Peer{
 		PublicKey:	hex.EncodeToString(pubkey),
@@ -137,49 +158,22 @@ func GetURI(conn *doh.Conn, name string) (endpoint string, ierr error) {
 	return
 }
 
-const PubkeyDomainSuffix = ".xhe.remoon.net."
-
-func GetPubkey(conn *doh.Conn, name string) (pubkey []byte, ierr error) {
-	conn.Reset()
-	name = dns.Fqdn(name)
-	if strings.HasSuffix(name, PubkeyDomainSuffix) {
-		return hex2pubkey(name)
-	}
-	q := dns.Question{
-		Name:	name,
-		Qtype:	dns.TypeCNAME,
-		Qclass:	dns.ClassINET,
-	}
-	m := &dns.Msg{
-		MsgHdr: dns.MsgHdr{
-			Id:			dns.Id(),
-			Opcode:			dns.OpcodeQuery,
-			RecursionDesired:	true,
-		},
-		Question:	[]dns.Question{q},
-	}
-	co := &dns.Conn{Conn: conn}
-	ierr = co.WriteMsg(m)
+func hex2pubkey(pubkey string) (b []byte, ierr error) {
+	b, ierr = hex.DecodeString(pubkey)
 	if ierr != nil {
 		return
 	}
-	r, ierr := co.ReadMsg()
-	if ierr != nil {
-		return
+	if len(b) != 32 {
+		return nil, ErrNotWireGuardPubkey
 	}
-	for _, a := range r.Answer {
-		switch v := a.(type) {
-		case *dns.CNAME:
-			return hex2pubkey(v.Target)
-		}
-	}
-	return nil, ErrNoCnamePubkey
+	return
 }
 
-func hex2pubkey(pubkey string) (b []byte, ierr error) {
-	pubkey = strings.TrimSuffix(pubkey, PubkeyDomainSuffix)
-	pubkey = strings.ReplaceAll(pubkey, ".", "")
-	b, ierr = hex.DecodeString(pubkey)
+func str2pubkey(pubkey string) (b []byte, ierr error) {
+	if len(pubkey) == 64 {
+		return hex2pubkey(pubkey)
+	}
+	b, ierr = base64.StdEncoding.DecodeString(pubkey)
 	if ierr != nil {
 		return
 	}
