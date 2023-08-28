@@ -3,11 +3,8 @@
 package cmd
 
 import (
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"net"
 	"os"
@@ -37,18 +34,6 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		})
 
-		key := viper.GetString("key")
-		var privkey []byte
-		if len(key) == 64 {
-			privkey, ierr = hex.DecodeString(key)
-		} else {
-			privkey, ierr = base64.StdEncoding.DecodeString(key)
-		}
-		if len(privkey) != 32 {
-			ierr = xhe.ErrNotWireGuardPubkey
-			return
-		}
-
 		var logLevel slog.Level
 		func() (ierr error) {
 			lv := viper.GetString("log")
@@ -61,7 +46,7 @@ var rootCmd = &cobra.Command{
 
 		tunName := viper.GetString("tun")
 		cfg := xhe.Config{
-			PrivateKey: hex.EncodeToString(privkey),
+			PrivateKey: viper.GetString("key"),
 			DoH:        viper.GetString("doh"),
 			Port:       viper.GetUint16("port"),
 			Links:      viper.GetStringSlice("link"),
@@ -69,7 +54,6 @@ var rootCmd = &cobra.Command{
 			LogLevel:   logLevel,
 			MTU:        viper.GetInt("mtu"),
 		}
-		log.Println(cfg.Links)
 
 		vtunMode := viper.GetBool("vtun")
 		if vtunMode {

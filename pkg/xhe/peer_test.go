@@ -2,7 +2,6 @@ package xhe
 
 import (
 	"encoding/base64"
-	"encoding/hex"
 	"testing"
 
 	"github.com/lainio/err2/assert"
@@ -27,7 +26,7 @@ func TestGetEndpoint(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		conn := doh.NewConn(nil, nil, "1.1.1.1")
 		endpoint := try.To1(GetURI(conn, "test-xhe.remoon.net"))
-		assert.Equal(endpoint, "https://remoon.net")
+		assert.Equal(endpoint, "https://xhe.remoon.net?peer=81dea2c5c077bf78b34a518eda9851cfbe718656fdc470970bde057cbceef23e")
 		t.Log(endpoint)
 	})
 	t.Run("not exists", func(t *testing.T) {
@@ -35,27 +34,5 @@ func TestGetEndpoint(t *testing.T) {
 		endpoint := try.To1(GetURI(conn, "test2-xhe.remoon.net"))
 		assert.Equal(endpoint, "")
 		t.Log(endpoint)
-	})
-}
-
-func TestGetPubkey(t *testing.T) {
-	expectKey := "2d3c1fc70a296501c202a7f48e64badc8822d5eb3e234bae9b75164f9b82441f"
-	t.Run("ok", func(t *testing.T) {
-		conn := doh.NewConn(nil, nil, "1.1.1.1")
-		pubkey := try.To1(GetPubkey(conn, "test-xhe.remoon.net"))
-		assert.Equal(hex.EncodeToString(pubkey), expectKey)
-		t.Log(pubkey)
-	})
-	t.Run("direct pubkey domain", func(t *testing.T) {
-		conn := doh.NewConn(nil, nil, "1.1.1.1")
-		pubkey := try.To1(GetPubkey(conn, "2.d3c1fc70a296501c202a7f48e64badc8822d5eb3e234bae9b75164f9b82441f.xhe.remoon.net"))
-		assert.Equal(hex.EncodeToString(pubkey), expectKey)
-		t.Log(pubkey)
-	})
-	t.Run("not exists", func(t *testing.T) {
-		conn := doh.NewConn(nil, nil, "1.1.1.1")
-		pubkey, err := GetPubkey(conn, "test2-xhe.remoon.net")
-		try.Is(err, ErrNoCnamePubkey)
-		t.Log(pubkey)
 	})
 }

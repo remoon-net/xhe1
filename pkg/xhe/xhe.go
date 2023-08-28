@@ -22,7 +22,7 @@ import (
 func Run(cfg Config) (dev *device.Device, ierr error) {
 	cfg.Normalize()
 
-	key, ierr := hex.DecodeString(cfg.PrivateKey)
+	key, ierr := str2pubkey(cfg.PrivateKey)
 	server := signaler.New(key, cfg.Links)
 	bind := newBind(server)
 	logger := device.NewLogger(

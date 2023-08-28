@@ -24,7 +24,7 @@ import (
 func Run(cfg Config) (dev *device.Device, ierr error) {
 	cfg.Normalize()
 
-	key, ierr := hex.DecodeString(cfg.PrivateKey)
+	key, ierr := str2pubkey(cfg.PrivateKey)
 	if ierr != nil {
 		return
 	}
