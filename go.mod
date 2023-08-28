@@ -10,7 +10,7 @@ require (
 	github.com/r3labs/sse/v2 v2.10.0
 	github.com/shynome/doh-client v1.1.0
 	github.com/shynome/go-x25519 v0.0.1
-	github.com/shynome/wgortc v0.0.11
+	github.com/shynome/wgortc v0.0.12
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	golang.org/x/crypto v0.12.0
