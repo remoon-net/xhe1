@@ -16,7 +16,7 @@ xhe 是一个基于 WireGuard 和 WebRTC 的 VPN, 最大的特点是可以在浏
 暂时只面向 Linux 用户, 直接使用 go 安装
 
 ```sh
-go install remoon.net/xhe@v0.1.3
+go install remoon.net/xhe@v0.1.4
 ```
 
 在 UI 完成后, 会提供各种安装包方便各位使用
