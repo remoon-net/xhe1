@@ -30,7 +30,7 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var ierr error
 		defer then(&ierr, nil, func() {
-			slog.Error("运行出错了", ierr)
+			slog.Error("运行出错了", "err", ierr)
 			os.Exit(1)
 		})
 
@@ -167,8 +167,8 @@ func init() {
 	f.String("log", "info", "日志等级. debug, info, warn, error")
 
 	f.String("tun", "xhe", "tun name")
-	f.Bool("vtun", false, "使用vtun模式, 该模式无需管理员权限即可运行")
-	f.String("export", "", "使用vtun模式暴露一个socks5服务, 参数示例: 1080, 127.0.0.1:1080")
+	f.Bool("vtun", false, "使用vtun模式. 该模式无需管理员权限即可运行")
+	f.String("export", "", "在vtun模式下暴露一个socks5服务, 参数示例: 1080, 127.0.0.1:1080")
 
 	viper.BindPFlags(f)
 }
@@ -190,7 +190,7 @@ func initConfig() {
 		// Search config in home directory with name ".xhe" (without extension).
 		viper.AddConfigPath(workdir)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".xhe")
+		viper.SetConfigName("xhe")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
