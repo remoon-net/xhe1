@@ -2,6 +2,8 @@
 
 xhe 是一个基于 WireGuard 和 WebRTC 的 VPN, 最大的特点是可以在浏览器中使用, 目标是万物互联
 
+注: xhe 并不是性能型的 VPN, 在性能较差(J1900)的机器上只能跑到 45M.
+
 ## 互联目标
 
 - [x] [浏览器](https://github.com/remoon-net/xhe-link)
