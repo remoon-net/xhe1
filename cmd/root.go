@@ -157,11 +157,11 @@ func init() {
 
 	f := rootCmd.Flags()
 
-	f.StringP("key", "k", "", "the private key hex string. wg genkey")
-	f.String("doh", "1.1.1.1", "doh server")
-	f.StringSliceP("link", "l", []string{}, "监听的 event source 链接")
-	f.StringSliceP("peer", "p", []string{}, "peers")
-	f.StringSlice("ice", []string{}, "待实现. ice service.")
+	f.StringP("key", "k", "", "WireGuard 私钥. 通过 wg genkey 生成")
+	f.String("doh", "1.1.1.1", "DoH 服务器. 用于域名查询")
+	f.StringSliceP("link", "l", []string{}, "要链接的服务端")
+	f.StringSliceP("peer", "p", []string{}, "节点")
+	f.StringSlice("ice", []string{}, "待实现. ice中继服务器, 用于穿越NAT")
 	f.Int("mtu", defaultMTU, "mtu")
 	f.Uint16("port", 0, "listen port")
 	f.String("log", "info", "日志等级. debug, info, warn, error")
