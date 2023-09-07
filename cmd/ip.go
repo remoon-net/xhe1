@@ -49,7 +49,7 @@ var ipCmd = &cobra.Command{
 		if ierr != nil {
 			return
 		}
-		fmt.Println(pf.String())
+		fmt.Println(pf.Addr().String())
 	},
 }
 
