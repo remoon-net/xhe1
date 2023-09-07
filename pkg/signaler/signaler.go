@@ -40,11 +40,11 @@ func (s *Signaler) Handshake(endpoint string, offer signaler.SDP) (answer *signa
 		"act", "handshake",
 		"endpoint", endpoint,
 	)
-	logger.Debug("握手开始")
+	logger.Debug("pending")
 	defer then(&ierr, func() {
-		logger.Debug("握手成功")
+		logger.Debug("successful")
 	}, func() {
-		logger.Warn("握手失败", "err", ierr)
+		logger.Warn("failed", "err", ierr)
 	})
 
 	b, ierr := json.Marshal(offer)
@@ -121,11 +121,11 @@ func (s *Signaler) subscribe(ctx context.Context, ch chan<- signaler.Session, se
 		"act", "subscribe",
 		"server", server,
 	)
-	logger.Debug("开始")
+	logger.Debug("start")
 	defer then(&ierr, func() {
-		logger.Debug("成功")
+		logger.Debug("successful")
 	}, func() {
-		logger.Warn("失败", "err", ierr)
+		logger.Warn("failed", "err", ierr)
 	})
 
 	u, ierr := SignURL(server, s.Key)
@@ -149,7 +149,7 @@ func (s *Signaler) subscribe(ctx context.Context, ch chan<- signaler.Session, se
 	c.ResponseValidator = func(c *sse.Client, resp *http.Response) (err error) {
 		defer func() {
 			if resp.StatusCode == http.StatusLocked {
-				logger.Warn("资源锁定中, 继续尝试")
+				logger.Warn("signaler server is locked. continue try")
 				return
 			}
 			errch <- err
@@ -216,11 +216,11 @@ func (s *Session) Resolve(answer *signaler.SDP) (ierr error) {
 		"act", "accept handshake",
 		"id", s.id,
 	)
-	logger.Debug("开始")
+	logger.Debug("start")
 	defer then(&ierr, func() {
-		logger.Debug("成功")
+		logger.Debug("successful")
 	}, func() {
-		logger.Warn("失败", "err", ierr)
+		logger.Warn("failed", "err", ierr)
 	})
 
 	body, ierr := json.Marshal(answer)
