@@ -34,10 +34,10 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 	bind.init(dev)
 
 	ierr = func() (ierr error) { // 设置 WireGuard
-		logger := slog.With(slog.String("act", "配置 wg"))
-		logger.Debug("进行中")
+		logger := slog.With(slog.String("act", "configure WireGuard"))
+		logger.Debug("pending")
 		defer then(&ierr, func() {
-			logger.Debug("完成")
+			logger.Debug("successful")
 		}, nil)
 
 		conf := config.Device{
@@ -56,10 +56,10 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 
 	ierr = func() (ierr error) { //设置 Peers
 		logger := slog.With(slog.String("act", "Peers"))
-		logger.Debug("解析中")
+		logger.Debug("parse")
 		count := 0
 		defer then(&ierr, func() {
-			logger.Debug("解析完成", "count", count)
+			logger.Debug("parse successful", "count", count)
 		}, nil)
 		conf := ""
 		s := &DoH{Server: cfg.DoH}
@@ -83,9 +83,9 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 			return
 		}
 
-		logger.Debug("应用中")
+		logger.Debug("add to WireGuard")
 		defer then(&ierr, func() {
-			logger.Debug("应用完成")
+			logger.Debug("add to WireGuard successful")
 		}, nil)
 		ierr = dev.IpcSet(conf)
 		if ierr != nil {
@@ -99,10 +99,10 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 	}
 
 	ierr = func() (ierr error) { // 启动 WireGuard
-		logger := slog.With(slog.String("act", "WireGuard 启动"))
-		logger.Debug("进行中")
+		logger := slog.With(slog.String("act", "WireGuard start"))
+		logger.Debug("pending")
 		defer then(&ierr, func() {
-			logger.Info("成功")
+			logger.Info("successful")
 		}, nil)
 
 		ierr = dev.Up()

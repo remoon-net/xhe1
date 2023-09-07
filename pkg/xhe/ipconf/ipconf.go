@@ -10,16 +10,16 @@ import (
 
 func AddRoute(dev tun.Device, ip netip.Prefix) (err error) {
 	logger := slog.With(
-		slog.String("act", "添加路由"),
+		slog.String("act", "add ip route"),
 		slog.String("ip", ip.String()),
 	)
-	logger.Debug("进行中")
+	logger.Debug("pending")
 	defer then(&err, func() {
-		logger.Debug("成功")
+		logger.Debug("successful")
 	}, nil)
 
 	if _, ok := dev.(vtun.GetStack); ok {
-		logger.Debug("vtun模式")
+		logger.Debug("vtun mode")
 		return addRouteToStack(dev, ip)
 	}
 	return addRoute(dev, ip)
@@ -27,15 +27,15 @@ func AddRoute(dev tun.Device, ip netip.Prefix) (err error) {
 
 func Up(dev tun.Device) (err error) {
 	logger := slog.With(
-		slog.String("act", "网卡设备启动"),
+		slog.String("act", "device tun up"),
 	)
-	logger.Debug("进行中")
+	logger.Debug("pending")
 	defer then(&err, func() {
-		logger.Debug("成功")
+		logger.Debug("successful")
 	}, nil)
 
 	if _, ok := dev.(vtun.GetStack); ok {
-		logger.Debug("vtun模式")
+		logger.Debug("vtun mode")
 		return nil
 	}
 	return up(dev)

@@ -12,16 +12,16 @@ import (
 
 // ipCmd represents the ip command
 var ipCmd = &cobra.Command{
-	Use:   "ip [pubkey]",
+	Use:   "ip {pubkey}",
 	Short: "get pubkey ip",
 	Long:  `get pubkey ip`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var ierr error
 		defer then(&ierr, nil, func() {
-			slog.Error("获取失败", "err", ierr)
+			slog.Error("get ip failed", "err", ierr)
 		})
 		if len(args) == 0 {
-			ierr = fmt.Errorf("请输入pubkey")
+			ierr = fmt.Errorf("pubkey is required")
 			if ierr != nil {
 				return
 			}

@@ -22,13 +22,13 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:	"xhe -k {private_key}",
-	Short:	"WireGuard over WebRTC",
-	Long:	`WireGuard over WebRTC`,
+	Use:   "xhe -k {private_key}",
+	Short: "WireGuard over WebRTC",
+	Long:  `WireGuard over WebRTC`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var ierr error
 		defer then(&ierr, nil, func() {
-			slog.Error("运行出错了", "err", ierr)
+			slog.Error("program broken", "err", ierr)
 			os.Exit(1)
 		})
 
@@ -47,13 +47,13 @@ var rootCmd = &cobra.Command{
 
 		tunName := viper.GetString("tun")
 		cfg := xhe.Config{
-			PrivateKey:	viper.GetString("key"),
-			DoH:		viper.GetString("doh"),
-			Port:		viper.GetUint16("port"),
-			Links:		viper.GetStringSlice("link"),
-			Peers:		viper.GetStringSlice("peer"),
-			LogLevel:	logLevel,
-			MTU:		viper.GetInt("mtu"),
+			PrivateKey: viper.GetString("key"),
+			DoH:        viper.GetString("doh"),
+			Port:       viper.GetUint16("port"),
+			Links:      viper.GetStringSlice("link"),
+			Peers:      viper.GetStringSlice("peer"),
+			LogLevel:   logLevel,
+			MTU:        viper.GetInt("mtu"),
 		}
 
 		vtunMode := viper.GetBool("vtun")
@@ -78,14 +78,14 @@ var rootCmd = &cobra.Command{
 		errs := make(chan error)
 
 		uapi, ierr := func() (uapi net.Listener, ierr error) {
-			logger := slog.With(slog.String("act", "UAPI启动"))
+			logger := slog.With("act", "UAPI start")
 			if vtunMode {
-				logger.Warn("vtun mode 不支持 UAPI")
+				logger.Warn("vtun mode does not support UAPI")
 				return
 			}
-			logger.Debug("进行中")
+			logger.Debug("pending")
 			defer then(&ierr, func() {
-				logger.Debug("完成")
+				logger.Debug("successful")
 			}, nil)
 
 			uapi, ierr = ipc.UAPIListen(tunName)
@@ -94,8 +94,8 @@ var rootCmd = &cobra.Command{
 			}
 			if uapi == nil {
 				logger.
-					With(slog.String("os", runtime.GOOS)).
-					Warn("当前平台暂不支持 UAPI")
+					With("os", runtime.GOOS).
+					Warn("UAPI is not supportted in this os")
 				return
 			}
 			go func() {
@@ -122,15 +122,15 @@ var rootCmd = &cobra.Command{
 			if addr == "" {
 				return
 			}
-			logger := slog.With(slog.String("act", "启动socks5服务"))
-			logger.Debug("进行中")
+			logger := slog.With("act", "socks5 server start")
+			logger.Debug("pending")
 			defer then(&ierr, func() {
-				logger.Info("成功")
+				logger.Info("successful")
 			}, nil)
 
 			tun, ok := cfg.GoTun.(vtun.GetStack)
 			if !ok {
-				return nil, fmt.Errorf("只有vtun模式下才可启动socks5服务")
+				return nil, fmt.Errorf("socks5 server only be supported in vtun mode")
 			}
 			s := vtun.NewSocks5Server(tun)
 			l, ierr = net.Listen("tcp", addr)
@@ -179,18 +179,18 @@ func init() {
 
 	f := rootCmd.Flags()
 
-	f.StringP("key", "k", "", "WireGuard 私钥. 通过 wg genkey 生成")
-	f.String("doh", "1.1.1.1", "DoH 服务器. 用于域名查询")
-	f.StringSliceP("link", "l", []string{}, "要链接的服务端")
-	f.StringSliceP("peer", "p", []string{}, "节点")
-	f.StringSlice("ice", []string{}, "待实现. ice中继服务器, 用于穿越NAT")
+	f.StringP("key", "k", "", "WireGuard private key. generate by wg genkey")
+	f.String("doh", "1.1.1.1", "DoH dns server. be used in cname link")
+	f.StringSliceP("link", "l", []string{}, "signaler server")
+	f.StringSliceP("peer", "p", []string{}, "peer")
+	f.StringSlice("ice", []string{}, "Todo. ice relay server support, NAT traversal")
 	f.Int("mtu", defaultMTU, "mtu")
 	f.Uint16("port", 0, "listen port")
-	f.String("log", "info", "日志等级. debug, info, warn, error")
+	f.String("log", "info", "log level. debug, info, warn, error")
 
 	f.String("tun", "xhe", "tun name")
-	f.Bool("vtun", false, "使用vtun模式. 该模式无需管理员权限即可运行")
-	f.String("export", "", "在vtun模式下暴露一个socks5服务, 参数示例: 1080, 127.0.0.1:1080")
+	f.Bool("vtun", false, "vtun mode don't require root")
+	f.String("export", "", "exprot socks5 server when run vtun mode, example: 1080, 127.0.0.1:1080")
 
 	viper.BindPFlags(f)
 }
@@ -215,7 +215,7 @@ func initConfig() {
 		viper.SetConfigName("xhe")
 	}
 
-	viper.AutomaticEnv()	// read in environment variables that match
+	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
