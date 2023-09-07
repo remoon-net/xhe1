@@ -1,5 +1,3 @@
-//go:build ierr
-
 package cmd
 
 import (
@@ -24,18 +22,33 @@ var ipCmd = &cobra.Command{
 		})
 		if len(args) == 0 {
 			ierr = fmt.Errorf("请输入pubkey")
+			if ierr != nil {
+				return
+			}
 		}
 		pubkeyStr := args[0]
 		var pubkey []byte
 		if len(pubkeyStr) == 64 {
 			pubkey, ierr = hex.DecodeString(pubkeyStr)
+			if ierr != nil {
+				return
+			}
 		} else {
 			pubkey, ierr = base64.StdEncoding.DecodeString(pubkeyStr)
+			if ierr != nil {
+				return
+			}
 		}
 		if len(pubkey) != 32 {
 			ierr = xhe.ErrNotWireGuardPubkey
+			if ierr != nil {
+				return
+			}
 		}
 		pf, ierr := xhe.GetIP(pubkey)
+		if ierr != nil {
+			return
+		}
 		fmt.Println(pf.String())
 	},
 }

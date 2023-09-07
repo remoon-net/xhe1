@@ -1,5 +1,3 @@
-//go:build ierr
-
 package cmd
 
 import (
@@ -24,9 +22,9 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "xhe -k {private_key}",
-	Short: "WireGuard over WebRTC",
-	Long:  `WireGuard over WebRTC`,
+	Use:	"xhe -k {private_key}",
+	Short:	"WireGuard over WebRTC",
+	Long:	`WireGuard over WebRTC`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var ierr error
 		defer then(&ierr, nil, func() {
@@ -39,6 +37,9 @@ var rootCmd = &cobra.Command{
 			lv := viper.GetString("log")
 			b := strconv.AppendQuote(nil, lv)
 			ierr = json.Unmarshal(b, &logLevel)
+			if ierr != nil {
+				return
+			}
 			h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel})
 			slog.SetDefault(slog.New(h))
 			return
@@ -46,23 +47,32 @@ var rootCmd = &cobra.Command{
 
 		tunName := viper.GetString("tun")
 		cfg := xhe.Config{
-			PrivateKey: viper.GetString("key"),
-			DoH:        viper.GetString("doh"),
-			Port:       viper.GetUint16("port"),
-			Links:      viper.GetStringSlice("link"),
-			Peers:      viper.GetStringSlice("peer"),
-			LogLevel:   logLevel,
-			MTU:        viper.GetInt("mtu"),
+			PrivateKey:	viper.GetString("key"),
+			DoH:		viper.GetString("doh"),
+			Port:		viper.GetUint16("port"),
+			Links:		viper.GetStringSlice("link"),
+			Peers:		viper.GetStringSlice("peer"),
+			LogLevel:	logLevel,
+			MTU:		viper.GetInt("mtu"),
 		}
 
 		vtunMode := viper.GetBool("vtun")
 		if vtunMode {
 			cfg.GoTun, ierr = vtun.CreateTUN(tunName, cfg.MTU)
+			if ierr != nil {
+				return
+			}
 		} else {
 			cfg.GoTun, ierr = tun.CreateTUN(tunName, cfg.MTU)
+			if ierr != nil {
+				return
+			}
 		}
 
 		dev, ierr := xhe.Run(cfg)
+		if ierr != nil {
+			return
+		}
 		defer dev.Close()
 
 		errs := make(chan error)
@@ -79,6 +89,9 @@ var rootCmd = &cobra.Command{
 			}, nil)
 
 			uapi, ierr = ipc.UAPIListen(tunName)
+			if ierr != nil {
+				return
+			}
 			if uapi == nil {
 				logger.
 					With(slog.String("os", runtime.GOOS)).
@@ -97,6 +110,9 @@ var rootCmd = &cobra.Command{
 			}()
 			return
 		}()
+		if ierr != nil {
+			return
+		}
 		if uapi != nil {
 			defer uapi.Close()
 		}
@@ -118,11 +134,17 @@ var rootCmd = &cobra.Command{
 			}
 			s := vtun.NewSocks5Server(tun)
 			l, ierr = net.Listen("tcp", addr)
+			if ierr != nil {
+				return
+			}
 			go func() {
 				errs <- s.Serve(l)
 			}()
 			return
 		}()
+		if ierr != nil {
+			return
+		}
 		if l != nil {
 			defer l.Close()
 		}
@@ -193,7 +215,7 @@ func initConfig() {
 		viper.SetConfigName("xhe")
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv()	// read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {

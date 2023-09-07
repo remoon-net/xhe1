@@ -1,5 +1,3 @@
-//go:build ierr
-
 package xhe
 
 import (
@@ -23,6 +21,9 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 	cfg.Normalize()
 
 	key, ierr := str2pubkey(cfg.PrivateKey)
+	if ierr != nil {
+		return
+	}
 	server := signaler.New(key, cfg.Links)
 	bind := newBind(server)
 	logger := device.NewLogger(
@@ -44,8 +45,14 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 			ListenPort: cfg.Port,
 		}
 		ierr = dev.IpcSet(conf.String())
+		if ierr != nil {
+			return
+		}
 		return
 	}()
+	if ierr != nil {
+		return
+	}
 
 	ierr = func() (ierr error) { //设置 Peers
 		logger := slog.With(slog.String("act", "Peers"))
@@ -63,21 +70,33 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 			p := _p
 			eg.Go(func() (ierr error) {
 				peer, ierr := s.ParsePeer(ctx, p)
+				if ierr != nil {
+					return
+				}
 				conf += peer.String()
 				count++
 				return
 			})
 		}
 		ierr = eg.Wait()
+		if ierr != nil {
+			return
+		}
 
 		logger.Debug("应用中")
 		defer then(&ierr, func() {
 			logger.Debug("应用完成")
 		}, nil)
 		ierr = dev.IpcSet(conf)
+		if ierr != nil {
+			return
+		}
 
 		return
 	}()
+	if ierr != nil {
+		return
+	}
 
 	ierr = func() (ierr error) { // 启动 WireGuard
 		logger := slog.With(slog.String("act", "WireGuard 启动"))
@@ -87,14 +106,29 @@ func Run(cfg Config) (dev *device.Device, ierr error) {
 		}, nil)
 
 		ierr = dev.Up()
+		if ierr != nil {
+			return
+		}
 		return
 	}()
+	if ierr != nil {
+		return
+	}
 
 	pubkey := wgtypes.Key(key).PublicKey()
 	pf, ierr := GetIP(pubkey[:])
+	if ierr != nil {
+		return
+	}
 	pf = netip.PrefixFrom(pf.Addr(), 24)
 	ierr = ipconf.AddRoute(cfg.GoTun, pf)
+	if ierr != nil {
+		return
+	}
 	ierr = ipconf.Up(cfg.GoTun)
+	if ierr != nil {
+		return
+	}
 
 	return
 }

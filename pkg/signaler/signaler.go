@@ -1,5 +1,3 @@
-//go:build ierr
-
 package signaler
 
 import (
@@ -50,13 +48,35 @@ func (s *Signaler) Handshake(endpoint string, offer signaler.SDP) (answer *signa
 	})
 
 	b, ierr := json.Marshal(offer)
+	if ierr != nil {
+		return
+	}
 	body := bytes.NewBuffer(b)
 	link, ierr := SignURL(endpoint, s.Key)
+	if ierr != nil {
+		return
+	}
 	req, ierr := http.NewRequest(http.MethodPost, link.String(), body)
+	if ierr != nil {
+		return
+	}
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	req = req.WithContext(ctx)
 	resp, ierr := s.Client.Do(req)
+	if ierr != nil {
+		return
+	}
 	ierr = checkResponse(resp)
+	if ierr != nil {
+		return
+	}
 	answer = new(signaler.SDP)
 	ierr = json.NewDecoder(resp.Body).Decode(answer)
+	if ierr != nil {
+		return
+	}
 	return
 }
 func (s *Signaler) Accept() (offerCh <-chan signaler.Session, ierr error) {
@@ -68,6 +88,9 @@ func (s *Signaler) Accept() (offerCh <-chan signaler.Session, ierr error) {
 		return ch, nil
 	}
 	ch, ierr := s.subscribeAll(ctx)
+	if ierr != nil {
+		return
+	}
 	return ch, nil
 }
 func (s *Signaler) Close() error {
@@ -87,6 +110,9 @@ func (s *Signaler) subscribeAll(ctx context.Context) (ch chan signaler.Session, 
 		})
 	}
 	ierr = g.Wait()
+	if ierr != nil {
+		return
+	}
 	return
 }
 
@@ -103,6 +129,9 @@ func (s *Signaler) subscribe(ctx context.Context, ch chan<- signaler.Session, se
 	})
 
 	u, ierr := SignURL(server, s.Key)
+	if ierr != nil {
+		return
+	}
 	c := sse.NewClient(u.String(), func(c *sse.Client) {
 		c.Connection = s.Client
 		c.ReconnectStrategy = NewReconnectStrategy(ctx, time.Second)
@@ -147,6 +176,9 @@ func (s *Signaler) subscribe(ctx context.Context, ch chan<- signaler.Session, se
 					})
 					var sdp signaler.SDP
 					ierr = json.Unmarshal(msg.Data, &sdp)
+					if ierr != nil {
+						return
+					}
 					sess := &Session{
 						ctx:  ctx,
 						root: s,
@@ -192,16 +224,31 @@ func (s *Session) Resolve(answer *signaler.SDP) (ierr error) {
 	})
 
 	body, ierr := json.Marshal(answer)
+	if ierr != nil {
+		return
+	}
 
 	root := s.root
 	link, ierr := SignURL(s.link, root.Key)
+	if ierr != nil {
+		return
+	}
 	req, ierr := http.NewRequest(http.MethodDelete, link.String(), bytes.NewBuffer(body))
+	if ierr != nil {
+		return
+	}
 	req.Header.Set("X-Event-Id", s.id)
 	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
 	defer cancel()
 	req = req.WithContext(ctx)
 	resp, ierr := root.Client.Do(req)
+	if ierr != nil {
+		return
+	}
 	ierr = checkResponse(resp)
+	if ierr != nil {
+		return
+	}
 
 	return
 }

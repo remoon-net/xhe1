@@ -1,5 +1,3 @@
-//go:build ierr
-
 package xhe
 
 import (
@@ -67,7 +65,13 @@ func (b *Bind) check(_ep conn.Endpoint, err error) {
 	_ = ierr
 	slog.With("connect", id).Warn("连接已关闭, 需要重新握手")
 	link, ierr := url.Parse(id)
+	if ierr != nil {
+		return
+	}
 	pubkey, ierr := hex.DecodeString(link.Fragment)
+	if ierr != nil {
+		return
+	}
 	pk := device.NoisePublicKey(pubkey)
 	peer := b.dev.LookupPeer(pk)
 	peer.ExpireCurrentKeypairs()
