@@ -60,6 +60,10 @@ func (s *Signaler) Handshake(endpoint string, offer signaler.SDP) (answer *signa
 	if ierr != nil {
 		return
 	}
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	req = req.WithContext(ctx)
 	resp, ierr := s.Client.Do(req)
 	if ierr != nil {
 		return
