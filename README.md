@@ -12,7 +12,7 @@ xhe is a VPN based on WireGuard and WebRTC, the biggest feature is that it can b
 ## From Source
 
 ```sh
-go install remoon.net/xhe@v0.1.6
+go install remoon.net/xhe@v0.1.7
 ```
 
 # Usage
